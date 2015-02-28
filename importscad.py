@@ -6,7 +6,6 @@ from bpy.types import Operator, AddonPreferences
 from bpy_extras.io_utils import ImportHelper
 
 # Todo:
-# - fix object name
 # - object scale
 # - give parameters to openscad
 
@@ -53,7 +52,7 @@ def read_openscad(context, filepath, scale, parameters):
         if bpy.ops.object.select_all.poll():
             bpy.ops.object.select_all(action='DESELECT')
     
-        obj_name = TEMPNAME
+        obj_name = os.path.basename(filepath).split('.')[0]
         tris, pts = stl_utils.read_stl(tempfile_path)
         blender_utils.create_and_link_mesh(obj_name, tris, pts, ((0.0, 1.0, 0.0, 0.0),(0.0, 0.0, 1.0, 0.0),(1.0, 0.0, 0.0, 0.0),(0.0, 0.0, 1.0, 0.0))) # magic values
         os.remove(tempfile_path)
