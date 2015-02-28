@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
-import bpy
 import os
+import bpy
+from bpy.props import StringProperty, BoolProperty, FloatProperty, IntProperty, PointerProperty, CollectionProperty
+from bpy.types import Operator, AddonPreferences
+from bpy_extras.io_utils import ImportHelper
 
 # Todo:
 # - fix object name
@@ -11,63 +14,70 @@ bl_info = {
     "name": "OpenSCAD importer",
     "description": "Imports OpenSCAD (.scad) files.",
     "author": "Maqq",
-    "version": (1, 1),
-    "blender": (2, 66, 0),
+    "version": (1, 2),
+    "blender": (2, 73, 0),
     "location": "File > Import",
     "warning": "", # used for warning icon and text in addons panel
     "category": "Import-Export"
 }
 
-# OpenSCAD path
-OPENSCAD = "C:\Program Files\OpenSCAD"
-
 # Temporary stl file
-TEMPNAME = "empexport.stl"
+TEMPNAME = "tempexport.stl"
+
 
 def read_openscad(context, filepath, scale, parameters):
+    """ Exports stl using OpenSCAD and imports it. """
     from io_mesh_stl import stl_utils
     from io_mesh_stl import blender_utils
     
-    print(OPENSCAD)
-    print(filepath)
-    print(parameters)
+    user_preferences = context.user_preferences
+    addon_prefs = user_preferences.addons[__name__].preferences
+    openscad_path = addon_prefs.filepath
+    tempfile_path = os.path.join(os.path.dirname(filepath), TEMPNAME)
+    
+    #print("OpenSCAD path:", openscad_path)
+    #print("filepath:", filepath)
+    #print("tempfilepath:", tempfile_path)
 
     # Export stl from OpenSCAD
-    old_wd = os.getcwd()
-    os.chdir(OPENSCAD)
-    os.system("openscad -o %s \"%s\"" % (TEMPNAME, filepath))
+    command = "\"\"%s\" -o \"%s\" \"%s\"\"" % \
+        (openscad_path, tempfile_path, filepath)
     
-    if os.path.exists(TEMPNAME):
+    print("Executing command:", command)
+    os.system(command)
+    
+    if os.path.exists(tempfile_path):
         if bpy.ops.object.mode_set.poll():
             bpy.ops.object.mode_set(mode='OBJECT')
     
         if bpy.ops.object.select_all.poll():
             bpy.ops.object.select_all(action='DESELECT')
     
-        objName = TEMPNAME
-        tris, pts = stl_utils.read_stl(TEMPNAME)
-        blender_utils.create_and_link_mesh(objName, tris, pts, ((0.0, 1.0, 0.0, 0.0),(0.0, 0.0, 1.0, 0.0),(1.0, 0.0, 0.0, 0.0),(0.0, 0.0, 1.0, 0.0)))#magic values
-        os.remove(TEMPNAME)
-    
-    os.chdir(old_wd)
+        obj_name = TEMPNAME
+        tris, pts = stl_utils.read_stl(tempfile_path)
+        blender_utils.create_and_link_mesh(obj_name, tris, pts, ((0.0, 1.0, 0.0, 0.0),(0.0, 0.0, 1.0, 0.0),(1.0, 0.0, 0.0, 0.0),(0.0, 0.0, 1.0, 0.0))) # magic values
+        os.remove(tempfile_path)
+    else:
+        print("Temporary export file not found:", tempfile_path)
     
     return {'FINISHED'}
 
 
-# ImportHelper is a helper class, defines filename and
-# invoke() function which calls the file selector.
-from bpy_extras.io_utils import ImportHelper
-from bpy.props import StringProperty, BoolProperty, FloatProperty, IntProperty, PointerProperty, CollectionProperty
-from bpy.types import Operator
+class OpenSCADImporterPreferences(AddonPreferences):
+    """ Addon preferences. """
+    bl_idname = __name__
 
-class ScadSettings(bpy.types.PropertyGroup):
-    my_int = bpy.props.IntProperty()
-    my_string = bpy.props.StringProperty()
+    filepath = StringProperty(
+            name="Path to OpenSCAD executable",
+            subtype='FILE_PATH',
+            )
 
-bpy.utils.register_class(ScadSettings)
+    def draw(self, context):
+        self.layout.prop(self, "filepath")
+
 
 class OpenSCADImporter(Operator, ImportHelper):
-    """Import OpenSCAD files"""
+    """ Import OpenSCAD files. """
     bl_idname = "import_mesh.scad"
     bl_label = "Import OpenSCAD"
 
@@ -78,14 +88,11 @@ class OpenSCADImporter(Operator, ImportHelper):
             default="*.scad",
             options={'HIDDEN'},
             )
-    
-    scad = StringProperty(name="openscad executable", default=OPENSCAD)
+
     scale = FloatProperty(name='Scale', default=1.0)
     
     def __init__(self):
-        global OPENSCAD
         super(OpenSCADImporter, self).__init__()
-        self.scad = OPENSCAD
     
     # Parameters for the scad file
     p1  = StringProperty(name='P1 name')
@@ -98,8 +105,6 @@ class OpenSCADImporter(Operator, ImportHelper):
     p4v = StringProperty(name='P4 value')
 
     def execute(self, context):
-        global OPENSCAD
-        OPENSCAD = self.scad
         return read_openscad(context, self.filepath, self.scale, {self.p1:self.p1v, self.p2:self.p2v, self.p3:self.p3v, self.p4:self.p4v})
 
 
@@ -108,6 +113,7 @@ def menu_func_import(self, context):
 
 def register():
     bpy.utils.register_class(OpenSCADImporter)
+    bpy.utils.register_class(OpenSCADImporterPreferences)
     bpy.types.INFO_MT_file_import.append(menu_func_import)
 
 def unregister():
@@ -116,6 +122,3 @@ def unregister():
 
 if __name__ == "__main__":
     pass
-    #register()
-    # test call
-    #bpy.ops.import_test.some_data('INVOKE_DEFAULT')
