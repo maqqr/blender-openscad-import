@@ -19,10 +19,10 @@ bl_info = {
 }
 
 # OpenSCAD path
-OPENSCAD = "<insert path to openscad here>"
+OPENSCAD = "C:\Program Files\OpenSCAD"
 
 # Temporary stl file
-TEMPNAME = "tempexport.stl"
+TEMPNAME = "empexport.stl"
 
 def read_openscad(context, filepath, scale, parameters):
     from io_mesh_stl import stl_utils
@@ -35,7 +35,7 @@ def read_openscad(context, filepath, scale, parameters):
     # Export stl from OpenSCAD
     old_wd = os.getcwd()
     os.chdir(OPENSCAD)
-    os.system("openscad -o %s %s" % (TEMPNAME, filepath))
+    os.system("openscad -o %s \"%s\"" % (TEMPNAME, filepath))
     
     if os.path.exists(TEMPNAME):
         if bpy.ops.object.mode_set.poll():
@@ -46,7 +46,7 @@ def read_openscad(context, filepath, scale, parameters):
     
         objName = TEMPNAME
         tris, pts = stl_utils.read_stl(TEMPNAME)
-        blender_utils.create_and_link_mesh(objName, tris, pts)
+        blender_utils.create_and_link_mesh(objName, tris, pts, ((0.0, 1.0, 0.0, 0.0),(0.0, 0.0, 1.0, 0.0),(1.0, 0.0, 0.0, 0.0),(0.0, 0.0, 1.0, 0.0)))#magic values
         os.remove(TEMPNAME)
     
     os.chdir(old_wd)
