@@ -6,7 +6,6 @@ from bpy.types import Operator, AddonPreferences
 from bpy_extras.io_utils import ImportHelper
 
 # Todo:
-# - object scale
 # - give parameters to openscad
 
 bl_info = {
@@ -28,6 +27,7 @@ def read_openscad(context, filepath, scale, parameters):
     """ Exports stl using OpenSCAD and imports it. """
     from io_mesh_stl import stl_utils
     from io_mesh_stl import blender_utils
+    from mathutils import Matrix
     
     user_preferences = context.user_preferences
     addon_prefs = user_preferences.addons[__name__].preferences
@@ -51,10 +51,11 @@ def read_openscad(context, filepath, scale, parameters):
     
         if bpy.ops.object.select_all.poll():
             bpy.ops.object.select_all(action='DESELECT')
-    
+
+        global_matrix = Matrix.Scale(scale, 4) # Create 4x4 scale matrix
         obj_name = os.path.basename(filepath).split('.')[0]
         tris, pts = stl_utils.read_stl(tempfile_path)
-        blender_utils.create_and_link_mesh(obj_name, tris, pts, ((0.0, 1.0, 0.0, 0.0),(0.0, 0.0, 1.0, 0.0),(1.0, 0.0, 0.0, 0.0),(0.0, 0.0, 1.0, 0.0))) # magic values
+        blender_utils.create_and_link_mesh(obj_name, tris, pts, global_matrix)
         os.remove(tempfile_path)
     else:
         print("Temporary export file not found:", tempfile_path)
