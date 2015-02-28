@@ -5,8 +5,6 @@ from bpy.props import StringProperty, BoolProperty, FloatProperty, IntProperty, 
 from bpy.types import Operator, AddonPreferences
 from bpy_extras.io_utils import ImportHelper
 
-# Todo:
-# - give parameters to openscad
 
 bl_info = {
     "name": "OpenSCAD importer",
@@ -33,10 +31,6 @@ def read_openscad(context, filepath, scale, parameters):
     addon_prefs = user_preferences.addons[__name__].preferences
     openscad_path = addon_prefs.filepath
     tempfile_path = os.path.join(os.path.dirname(filepath), TEMPNAME)
-    
-    #print("OpenSCAD path:", openscad_path)
-    #print("filepath:", filepath)
-    #print("tempfilepath:", tempfile_path)
 
     # Export stl from OpenSCAD
     command = "\"\"%s\" -o \"%s\" \"%s\"\"" % \
@@ -90,10 +84,7 @@ class OpenSCADImporter(Operator, ImportHelper):
             )
 
     scale = FloatProperty(name='Scale', default=1.0)
-    
-    def __init__(self):
-        super(OpenSCADImporter, self).__init__()
-    
+
     # Parameters for the scad file
     p1  = StringProperty(name='P1 name')
     p1v = StringProperty(name='P1 value')
@@ -103,6 +94,9 @@ class OpenSCADImporter(Operator, ImportHelper):
     p3v = StringProperty(name='P3 value')
     p4  = StringProperty(name='P4 name')
     p4v = StringProperty(name='P4 value')
+
+    def __init__(self):
+        super(OpenSCADImporter, self).__init__()
 
     def execute(self, context):
         return read_openscad(context, self.filepath, self.scale, {self.p1:self.p1v, self.p2:self.p2v, self.p3:self.p3v, self.p4:self.p4v})
