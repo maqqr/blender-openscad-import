@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import subprocess
 import bpy
 from bpy.props import StringProperty, BoolProperty, FloatProperty, IntProperty, PointerProperty, CollectionProperty
 from bpy.types import Operator, AddonPreferences
@@ -34,13 +35,13 @@ def read_openscad(context, filepath, scale, parameters):
     tempfile_path = os.path.join(os.path.dirname(filepath), TEMPNAME)
 
     # Export stl from OpenSCAD
-    #command = "\"\"%s\" -o \"%s\" \"%s\"\"" % \
-    command = "\"%s\" -o \"%s\" \"%s\"" % \
-        (openscad_path, tempfile_path, filepath)
-    
+    command = [openscad_path, "-o", tempfile_path, filepath]
+
     print("Executing command:", command)
-    os.system(command)
-    
+    result = subprocess.run(command, capture_output=True, shell=True, text=True)
+    print(result.stdout)
+    print(result.stderr)
+
     if os.path.exists(tempfile_path):
         if bpy.ops.object.mode_set.poll():
             bpy.ops.object.mode_set(mode='OBJECT')
@@ -48,12 +49,15 @@ def read_openscad(context, filepath, scale, parameters):
         if bpy.ops.object.select_all.poll():
             bpy.ops.object.select_all(action='DESELECT')
 
-        global_matrix = Matrix.Scale(scale, 4) # Create 4x4 scale matrix
         obj_name = os.path.basename(filepath).split('.')[0]
-       # tris, pts = stl_utils.read_stl(tempfile_path)
-        #blender_utils.create_and_link_mesh(obj_name, tris, pts, global_matrix)
-        bpy.ops.import_mesh.stl(filepath=tempfile_path)
+        bpy.ops.import_mesh.stl(filepath=tempfile_path, global_scale=scale)
         os.remove(tempfile_path)
+
+        # Rename the imported stl objects
+        for imported_obj in bpy.context.selected_objects:
+            imported_obj.name = obj_name
+            imported_obj.data.name = obj_name
+
     else:
         print("Temporary export file not found:", tempfile_path)
     
