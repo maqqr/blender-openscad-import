@@ -27,8 +27,7 @@ def read_openscad(context, filepath, scale, parameters):
     from io_mesh_stl import stl_utils
     from io_mesh_stl import blender_utils
     from mathutils import Matrix
-    
-    #user_preferences = context.user_preferences
+
     user_preferences = bpy.context.preferences
     addon_prefs = user_preferences.addons[__name__].preferences
     openscad_path = addon_prefs.filepath
@@ -45,7 +44,7 @@ def read_openscad(context, filepath, scale, parameters):
     if os.path.exists(tempfile_path):
         if bpy.ops.object.mode_set.poll():
             bpy.ops.object.mode_set(mode='OBJECT')
-    
+
         if bpy.ops.object.select_all.poll():
             bpy.ops.object.select_all(action='DESELECT')
 
@@ -60,7 +59,7 @@ def read_openscad(context, filepath, scale, parameters):
 
     else:
         print("Temporary export file not found:", tempfile_path)
-    
+
     return {'FINISHED'}
 
 
@@ -115,12 +114,10 @@ def menu_func_import(self, context):
 def register():
     bpy.utils.register_class(OpenSCADImporter)
     bpy.utils.register_class(OpenSCADImporterPreferences)
-    #bpy.types.INFO_MT_file_import.append(menu_func_import)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 def unregister():
     bpy.utils.unregister_class(OpenSCADImporter)
-    #bpy.types.INFO_MT_file_import.remove(menu_func_import)
     bpy.types.TOPBAR_MT_file_import.append(menu_func_import)
 
 if __name__ == "__main__":
