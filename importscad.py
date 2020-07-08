@@ -34,7 +34,8 @@ def read_openscad(context, filepath, scale, parameters):
     tempfile_path = os.path.join(os.path.dirname(filepath), TEMPNAME)
 
     # Export stl from OpenSCAD
-    command = "\"\"%s\" -o \"%s\" \"%s\"\"" % \
+    #command = "\"\"%s\" -o \"%s\" \"%s\"\"" % \
+    command = "\"%s\" -o \"%s\" \"%s\"" % \
         (openscad_path, tempfile_path, filepath)
     
     print("Executing command:", command)
