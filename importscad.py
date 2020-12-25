@@ -37,7 +37,8 @@ def read_openscad(context, filepath, scale, parameters):
     command = [openscad_path, "-o", tempfile_path, filepath]
 
     print("Executing command:", command)
-    result = subprocess.run(command, capture_output=True, shell=True, text=True)
+    use_shell = False if os.name == 'posix' else True
+    result = subprocess.run(command, capture_output=True, shell=use_shell, text=True)
     print(result.stdout)
     print(result.stderr)
 
